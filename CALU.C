@@ -25,12 +25,11 @@ char const*help =
 //IMPLEMENT WHENEVER ASHSGJLKJHLHLLL | & << >> \n
 "\n\
  Run with no arguments\n\
- to enter the shell\
+ to enter the shell\n\
+ To quit, type \"exit\"\
 ";
 
-char const digits[] = "0123456789";
-
-// Read string length until a character that isn't a digit is encountered
+/// Read string length until a character that isn't a digit is encountered
 size_t numlen(char*num)
 {
 	size_t len = 0;
@@ -42,15 +41,10 @@ size_t numlen(char*num)
 	return len;
 }
 
+/// Copy source number string to desination
 void numcpy(char*dst,char*src)
 {
 	memset(dst,0,DIGIT_MAX);
-	//size_t len = 0;
-	//while (
-	//	src[len] >= 0x30 &&
-	//	src[len] <  0x3A
-	//)
-	//	len++;
 	memcpy(dst,src,numlen(src));
 }
 
@@ -59,6 +53,7 @@ char out[DIGIT_MAX],
 	 buf2[DIGIT_MAX],
 	 in[(DIGIT_MAX*2)+1];
 
+/// No op
 int null(char*a,char*b)
 {
 	memset(out,0,DIGIT_MAX);
@@ -71,20 +66,31 @@ int add(char*a,char*b)
 	numcpy(out,buf1);
 	int dgtcur = numlen(out) - 1;
 	int dgtcur2 = numlen(buf2) - 1;
-	//obviously figure out better way to do this
+	int dgtcur3;
+	if(dgtcur2 > dgtcur)
+	{
+		numcpy(out,buf2);
+		numcpy(buf2,buf1);
+		dgtcur = numlen(out) - 1;
+		dgtcur2 = numlen(buf2) - 1;
+	}
 	do {
 		for(int i = buf2[dgtcur2]; i > 0x30; i--)
 		{
 			out[dgtcur]++;
-			if(out[dgtcur] == 0x3A)
+			dgtcur3 = dgtcur;
+			while(out[dgtcur3] >= 0x3A)
 			{
-				out[dgtcur] = 0x30;
-				if(out[dgtcur-1] <= 0x30 && out[dgtcur-1] > 0x3A)
+				out[dgtcur3]-= 0xA;
+				if(out == (out+dgtcur3))
 				{
 					memmove(out+1,out,numlen(out));
-					out[dgtcur-1] = 0x30;
+					dgtcur3++;
+					dgtcur++;
+					out[dgtcur3-1] = 0x30;
 				}
-				out[dgtcur-1]++;
+				out[dgtcur3-1]++;
+				dgtcur3--;
 			}
 		}
 		dgtcur--;
@@ -96,6 +102,11 @@ int add(char*a,char*b)
 int eval(char*_)
 {
 	char*ecur = _;
+	if(!numlen(ecur) && ecur[0] >= 0x20)
+	{
+		puts("Invalid input");
+		return -1;
+	}
 	int(*mode)(char*,char*) = &null;
 	numcpy(buf1,ecur);
 	ecur += numlen(ecur);
@@ -139,19 +150,20 @@ int main(int argc, char*argv[])
 		}
 		eval((char*)argv[1]);
 		puts(out);
-		//eval(argv[1]);
 	}
 	else
-	{
-		
-		//printf("%u",numlen("1235654AAA"));
 		while (1)
 		{
 			memset(in,0,(DIGIT_MAX*2)+1);
 			fgets(in,(DIGIT_MAX*2)+1,stdin);
-			eval(in);
-			puts(out);
-			//printf(in);
+			if(!strncmp(in,"exit",4) && in[4] < 0x20)
+				return 0;
+			if(!strncmp(in,"help",4) && in[4] < 0x20)
+			{
+				puts(help);
+				continue;
+			}
+			if(eval(in) != -1)
+				puts(out);
 		}
-	}
 }
